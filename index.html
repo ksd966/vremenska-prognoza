@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vremenska prognoza</title>
+<meta name="description" content="Prognoza sa jasno označenom pouzdanošću: trenutno stanje, vetar, more, 48 sati i po danima.">
+
+<!-- instalacija na početni ekran (iOS i Android) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#16211C">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vreme">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="icon" href="assets/icons/icon-192.png" sizes="192x192" type="image/png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.open-meteo.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-sky="night">
+
+<div class="ground" aria-hidden="true"></div>
+
+<header class="topbar">
+  <a class="brand" href="./">
+    <span class="brand__mark" aria-hidden="true"></span>
+    <span class="brand__text">Vreme<span class="brand__dot">.</span></span>
+  </a>
+
+  <form class="search" id="search-form" role="search" autocomplete="off">
+    <svg class="search__icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
+    <input id="search-input" class="search__input" type="search" placeholder="Pretraži mesto…"
+           aria-label="Pretraga mesta" role="combobox" aria-expanded="false" aria-controls="suggestions">
+    <button class="search__geo" id="geo-btn" type="button" title="Moja lokacija" aria-label="Moja lokacija">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+    </button>
+    <ul class="suggestions" id="suggestions" role="listbox" hidden></ul>
+  </form>
+
+  <button class="iconbtn" id="refresh-btn" type="button" title="Osveži podatke" aria-label="Osveži podatke">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>
+  </button>
+</header>
+
+<div class="live" id="live">
+  <span class="live__dot" id="live-dot" aria-hidden="true"></span>
+  <span class="live__text" id="live-text">Povezivanje…</span>
+</div>
+
+<main class="page">
+
+  <!-- 1 · SADA -->
+  <section class="hero" aria-labelledby="place">
+    <article class="card card--now">
+      <header class="now__head">
+        <div>
+          <h1 class="now__place" id="place">Učitavanje…</h1>
+          <p class="now__time" id="local-time"></p>
+        </div>
+        <span class="badge badge--high" id="now-badge">mereno sada</span>
+      </header>
+
+      <div class="now__reading">
+        <p class="temp" id="temp"><span>--</span><small>°</small></p>
+        <div class="now__icon" id="now-icon"></div>
+      </div>
+
+      <p class="now__cond" id="condition">—</p>
+      <p class="now__sub"><span id="feels">Oseća se kao –</span> · <span id="today-range">– / –</span></p>
+
+      <p class="now__summary" id="summary"></p>
+    </article>
+
+    <div class="hero__tiles">
+      <article class="card tile tile--wind">
+        <p class="tile__label">Vetar</p>
+        <p class="tile__value" id="wind-now">–<small>km/h</small></p>
+        <p class="tile__extra"><span id="wind-bft">–</span></p>
+      </article>
+      <article class="card tile">
+        <p class="tile__label">Udari</p>
+        <p class="tile__value" id="gust-now">–<small>km/h</small></p>
+        <p class="tile__extra" id="gust-note">—</p>
+      </article>
+      <article class="card tile">
+        <p class="tile__label">Padavine sada</p>
+        <p class="tile__value" id="rain-now">–</p>
+        <p class="tile__extra" id="rain-next">—</p>
+      </article>
+      <article class="card tile">
+        <p class="tile__label">Vlažnost</p>
+        <p class="tile__value" id="humidity">–<small>%</small></p>
+        <p class="tile__extra" id="pressure">—</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- 1b · NOWCAST -->
+  <section class="nowcast" id="nowcast" hidden aria-label="Padavine u narednih sat vremena">
+    <div class="nowcast__head">
+      <h2 class="nowcast__title" id="nowcast-title">Sledećih 60 minuta</h2>
+      <span class="nowcast__note" id="nowcast-note"></span>
+    </div>
+    <div class="nowcast__bars" id="nowcast-bars"></div>
+    <p class="nowcast__hint">Koraci od 15 minuta. Merenja u ovoj rezoluciji postoje za srednju Evropu
+      i Severnu Ameriku; drugde se vrednosti izvode iz satne prognoze.</p>
+  </section>
+
+  <!-- 2 · VETAR -->
+  <section class="section" aria-labelledby="wind-title">
+    <div class="section__head">
+      <h2 class="section__title" id="wind-title">Vetar</h2>
+      <p class="section__note">strelica i kazaljka pokazuju odakle vetar duva</p>
+    </div>
+
+    <div class="wind">
+      <article class="card wind__dial">
+        <div class="compass" id="compass"></div>
+        <div class="wind__read">
+          <p class="wind__dir" id="wind-dir">–</p>
+          <p class="wind__speed" id="wind-speed">– km/h</p>
+          <p class="wind__bft" id="wind-scale">–</p>
+        </div>
+      </article>
+
+      <article class="card wind__detail">
+        <div class="wind__rows" id="wind-rows"></div>
+        <div class="chart chart--wind">
+          <div class="chart__head">
+            <h3 class="chart__title">Vetar i udari, narednih 48 h</h3>
+            <p class="legend legend--inline">
+              <span class="key key--wind">vetar</span>
+              <span class="key key--gust">udari</span>
+            </p>
+          </div>
+          <div class="chart__scroll"><div id="wind-chart"></div></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 3 · MORE (samo za obalu) -->
+  <section class="section" id="sea-section" hidden aria-labelledby="sea-title">
+    <div class="section__head">
+      <h2 class="section__title" id="sea-title">More i plaža</h2>
+      <label class="facing">
+        Plaža gleda na
+        <select id="facing" aria-label="Strana sveta u koju plaža gleda">
+          <option value="0">sever</option>
+          <option value="45">severoistok</option>
+          <option value="90" selected>istok</option>
+          <option value="135">jugoistok</option>
+          <option value="180">jug</option>
+          <option value="225">jugozapad</option>
+          <option value="270">zapad</option>
+          <option value="315">severozapad</option>
+        </select>
+      </label>
+    </div>
+    <div class="sea" id="sea"></div>
+  </section>
+
+  <!-- 4 · 48 SATI -->
+  <section class="section" aria-labelledby="hours-title">
+    <div class="section__head">
+      <h2 class="section__title" id="hours-title">Narednih 48 sati</h2>
+      <span class="badge badge--high">visoka pouzdanost</span>
+    </div>
+    <div class="chart chart--hours">
+      <div class="chart__scroll"><div id="hours-chart"></div></div>
+    </div>
+  </section>
+
+  <!-- 5 · SEDAM DANA -->
+  <section class="section" aria-labelledby="days-title">
+    <div class="section__head">
+      <h2 class="section__title" id="days-title">Dan po dan</h2>
+      <p class="section__note" id="days-range"></p>
+    </div>
+    <div class="days" id="days" role="table" aria-label="Prognoza po danima"></div>
+    <p class="legend" id="days-legend"></p>
+  </section>
+
+  <!-- 6 · TREND -->
+  <section class="section section--trend" id="trend-section" aria-labelledby="trend-title">
+    <div class="section__head">
+      <h2 class="section__title" id="trend-title">Dalje od 10 dana — trend</h2>
+      <span class="badge badge--trend">nije prognoza po danima</span>
+    </div>
+    <p class="section__lead">
+      Na ovoj udaljenosti modeli više ne pogađaju raspored pojedinačnih dana.
+      Prikazan je samo raspon temperatura i koliko se modeli međusobno razilaze.
+    </p>
+    <div class="trend" id="trend"></div>
+  </section>
+
+  <!-- 7 · SUNCE I MESEC -->
+  <section class="section" aria-labelledby="astro-title">
+    <div class="section__head">
+      <h2 class="section__title" id="astro-title">Sunce i Mesec</h2>
+      <span class="badge badge--exact">izračunato, bez odstupanja</span>
+    </div>
+    <div class="astro" id="astro"></div>
+  </section>
+
+  <p class="status" id="status" role="status" hidden></p>
+</main>
+
+<footer class="footer">
+  <div>
+    <p><strong>Kako čitati pouzdanost.</strong> Prikazuje se samo ono što na datoj udaljenosti ima smisla:
+      sat po sat do 48 h, dan po dan do 7–9 dana, dalje samo trend.
+      Oznaka pouzdanosti spaja udaljenost dana i razilaženje tri modela (ECMWF, GFS, ICON).</p>
+    <p>Podaci: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> ·
+       Sunce i Mesec: lokalni proračun (NOAA / Meeus)</p>
+  </div>
+</footer>
+
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+
+<aside class="install" id="install" hidden>
+  <p><b>Dodaj na početni ekran</b><br>
+     U Safariju dodirni dugme <svg class="install__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg> Podeli, pa <b>Add to Home Screen</b>.
+     Aplikacija se tada otvara preko celog ekrana i radi i bez mreže.</p>
+  <button type="button" id="install-close" aria-label="Zatvori savet">Razumem</button>
+</aside>
+
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-sun" viewBox="0 0 48 48"><circle cx="24" cy="24" r="9"/><path d="M24 4v6M24 38v6M4 24h6M38 24h6M9.9 9.9l4.2 4.2M33.9 33.9l4.2 4.2M38.1 9.9l-4.2 4.2M14.1 33.9l-4.2 4.2"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 48 48"><path d="M31 6a18 18 0 1 0 11 32A20 20 0 0 1 31 6Z"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 48 48"><path d="M14 38a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 38Z"/></symbol>
+  <symbol id="i-cloud-sun" viewBox="0 0 48 48"><circle cx="17" cy="15" r="6"/><path d="M17 3v3M5 15h3M8.5 6.5l2 2M25.5 6.5l-2 2"/><path d="M19 40a8 8 0 0 1-.5-16 11.5 11.5 0 0 1 22 2.1A7 7 0 0 1 39 40Z"/></symbol>
+  <symbol id="i-cloud-moon" viewBox="0 0 48 48"><path d="M26 5a11 11 0 0 0 8 18 12 12 0 1 1-8-18Z"/><path d="M17 40a8 8 0 0 1-.5-16 11.5 11.5 0 0 1 22 2.1A7 7 0 0 1 37 40Z"/></symbol>
+  <symbol id="i-fog" viewBox="0 0 48 48"><path d="M14 30a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 30Z"/><path d="M9 36h30M13 42h22"/></symbol>
+  <symbol id="i-drizzle" viewBox="0 0 48 48"><path d="M14 30a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 30Z"/><path d="M18 36v3M26 36v5M34 36v3"/></symbol>
+  <symbol id="i-rain" viewBox="0 0 48 48"><path d="M14 28a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 28Z"/><path d="m17 34-2 8M26 34l-2 8M35 34l-2 8"/></symbol>
+  <symbol id="i-snow" viewBox="0 0 48 48"><path d="M14 28a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 28Z"/><path d="M17 36v6M14 39h6M31 36v6M28 39h6M24 40v4"/></symbol>
+  <symbol id="i-sleet" viewBox="0 0 48 48"><path d="M14 28a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 28Z"/><path d="m17 34-2 8M31 36v6M28 39h6"/></symbol>
+  <symbol id="i-storm" viewBox="0 0 48 48"><path d="M14 28a9 9 0 0 1-.6-18 13 13 0 0 1 25 2.4A8 8 0 0 1 36 28Z"/><path d="m26 32-8 9h7l-2 8 9-10h-7Z"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 48 48"><path d="M4 30c5 0 5-5 10-5s5 5 10 5 5-5 10-5 5 5 10 5M4 40c5 0 5-5 10-5s5 5 10 5 5-5 10-5 5 5 10 5M4 20c5 0 5-5 10-5s5 5 10 5 5-5 10-5 5 5 10 5"/></symbol>
+  <symbol id="i-thermo" viewBox="0 0 48 48"><path d="M28 28V10a4 4 0 0 0-8 0v18a8 8 0 1 0 8 0Z"/><path d="M24 18v14"/></symbol>
+</svg>
+
+<script src="assets/js/app.js" type="module"></script>
+</body>
+</html>

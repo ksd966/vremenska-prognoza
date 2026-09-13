@@ -1,0 +1,19 @@
+{
+  "name": "Vremenska prognoza",
+  "short_name": "Vreme",
+  "description": "Prognoza sa jasno označenom pouzdanošću: trenutno stanje, vetar, more, 48 sati i po danima.",
+  "lang": "sr",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16211C",
+  "theme_color": "#16211C",
+  "categories": ["weather", "travel", "utilities"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
