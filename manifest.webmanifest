@@ -1,6 +1,6 @@
 {
-  "name": "Vremenska prognoza",
-  "short_name": "Vreme",
+  "name": "Anemos — vremenska prognoza",
+  "short_name": "Anemos",
   "description": "Prognoza sa jasno označenom pouzdanošću: trenutno stanje, vetar, more, 48 sati i po danima.",
   "lang": "sr",
   "dir": "ltr",

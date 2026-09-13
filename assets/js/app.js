@@ -633,7 +633,7 @@ async function load(place, { quiet = false } = {}) {
     saveSnapshot();
     updateLiveState();
 
-    document.title = `${temp(data.forecast.current.temperature_2m)} ${place.name} — Vremenska prognoza`;
+    document.title = `${temp(data.forecast.current.temperature_2m)} ${place.name} — Anemos`;
     localStorage.setItem(STORAGE.place, JSON.stringify({ ...place, label: place.label || placeLabel(place) }));
     markQuick(place);
 

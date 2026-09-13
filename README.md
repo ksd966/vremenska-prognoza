@@ -1,4 +1,6 @@
-# Vremenska prognoza
+# Anemos
+
+*ἄνεμος — vetar.* Vremenska prognoza za obalu i kopno.
 
 Web aplikacija koja prikazuje **samo ono što na datoj udaljenosti zaista ima smisla**:
 sat po sat do 48 h, dan po dan dok pouzdanost to dozvoljava, dalje isključivo trend.
