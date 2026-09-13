@@ -59,6 +59,12 @@ body[data-sky="fog"]        { --ground:#191E1B; --tint:rgba(166,176,163,.06); }
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}   /* atribut hidden mora da nadjača display iz komponenti */
+
+/* Ponašanje kao u aplikaciji, ne kao na stranici: bez dugog pritiska,
+   bez selektovanja teksta i bez zuma na dupli tap. Polja za unos ostaju normalna. */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text}
+button,a,select,summary,label,.day,.trend__row{touch-action:manipulation}
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0;min-height:100dvh;background:var(--ground);color:var(--text);
@@ -75,6 +81,25 @@ button{-webkit-appearance:none;appearance:none}
 .sprite{position:absolute;width:0;height:0;overflow:hidden}
 
 .display{font-family:"Fraunces","Iowan Old Style",Georgia,serif;font-weight:500;letter-spacing:-.015em}
+
+/* ---------- povuci nadole za osvežavanje ---------- */
+.ptr{
+  position:fixed;top:calc(var(--safe-top) + 6px);left:50%;z-index:60;
+  width:34px;height:34px;margin-left:-17px;border-radius:50%;
+  display:grid;place-items:center;pointer-events:none;
+  background:var(--surface-2);border:1px solid var(--line-strong);
+  opacity:0;transform:translateY(-46px) scale(.8);
+}
+.ptr__mark{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid var(--accent);border-top-color:transparent;
+  transform:rotate(var(--spin,0deg));
+}
+.ptr[data-state="pulling"]{transition:none}
+.ptr[data-state="ready"] .ptr__mark{border-top-color:var(--accent);border-right-color:transparent}
+.ptr[data-state="refreshing"]{opacity:1;transform:translateY(0) scale(1);transition:.25s var(--ease)}
+.ptr[data-state="refreshing"] .ptr__mark{animation:spin .8s linear infinite}
+.ptr[data-state="done"]{opacity:0;transform:translateY(-46px) scale(.8);transition:.3s var(--ease)}
 
 /* ---------- podloga ---------- */
 .ground{

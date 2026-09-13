@@ -685,6 +685,64 @@ function renderQuick() {
 
 /* ====================================================================== start */
 
+/* ============================================================ povuci za osvežavanje */
+
+/**
+ * Povlačenje nadole sa vrha strane osvežava podatke, kao u telefonskim aplikacijama.
+ * Radi samo kada je stranica na vrhu i kada se povlači prstom, da ne bi smetalo
+ * običnom skrolovanju ni vodoravnim grafikama.
+ */
+function initPullToRefresh() {
+  const indicator = el.ptr;
+  const THRESHOLD = 72;
+  let startY = null, distance = 0, active = false;
+
+  const show = (state, offset = 0, spin = 0) => {
+    indicator.dataset.state = state;
+    if (state === 'pulling' || state === 'ready') {
+      indicator.style.opacity = String(Math.min(1, offset / THRESHOLD));
+      indicator.style.transform = `translateY(${Math.min(offset * 0.6, 52) - 46}px) scale(${0.8 + Math.min(offset / THRESHOLD, 1) * 0.2})`;
+      indicator.style.setProperty('--spin', `${spin}deg`);
+    } else {
+      indicator.style.opacity = '';
+      indicator.style.transform = '';
+    }
+  };
+
+  document.addEventListener('touchstart', (e) => {
+    if (window.scrollY > 0 || e.touches.length !== 1) { startY = null; return; }
+    startY = e.touches[0].clientY;
+    distance = 0;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (startY === null || active) return;
+
+    distance = e.touches[0].clientY - startY;
+    if (distance <= 0 || window.scrollY > 0) { show('idle'); return; }
+
+    // Vodoravne grafike zadržavaju svoje ponašanje.
+    if (e.target.closest('.chart__scroll')) return;
+
+    if (distance > 8) e.preventDefault();
+    show(distance >= THRESHOLD ? 'ready' : 'pulling', distance, distance * 2.6);
+  }, { passive: false });
+
+  document.addEventListener('touchend', async () => {
+    if (startY === null || active) return;
+    const pulled = distance;
+    startY = null;
+
+    if (pulled < THRESHOLD) { show('done'); return; }
+
+    active = true;
+    show('refreshing');
+    await load(state.place || QUICK[0], { quiet: true });
+    show('done');
+    setTimeout(() => { active = false; }, 300);
+  }, { passive: true });
+}
+
 /* ====================================================================== instalacija */
 
 const isStandalone = () =>
@@ -717,6 +775,7 @@ function init() {
   initSearch();
   registerServiceWorker();
   installHint();
+  initPullToRefresh();
 
   state.facing = Number(localStorage.getItem(STORAGE.facing) ?? 90);
   el.facing.value = String(state.facing);

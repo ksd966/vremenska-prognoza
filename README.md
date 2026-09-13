@@ -15,7 +15,9 @@ preko GitHub Pages:
 2. sačekaj da se objavi, pa na iPhone-u otvori dobijenu adresu **u Safariju**
 3. dugme **Podeli → Add to Home Screen**
 
-Posle toga se otvara preko celog ekrana, bez Safari trake, sa svojom ikonicom.
+Posle toga se otvara preko celog ekrana, bez Safari trake, sa svojom ikonicom,
+splash ekranom pri pokretanju i osvežavanjem povlačenjem nadole — bez web navika
+(dugi pritisak, selektovanje teksta, zum na dupli tap).
 Sve podešeno za iPhone 13: bezbedne zone oko zareza i donje crte, mete za dodir
 od najmanje 40 px, portret orijentacija, tamna statusna traka.
 
