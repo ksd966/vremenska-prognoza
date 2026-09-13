@@ -5,7 +5,7 @@
  * Podaci uvek prvo idu na mrežu; keš je rezerva kad mreže nema, uz jasnu
  * poruku u aplikaciji koliko su podaci stari.
  */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL = `ljuska-${VERSION}`;
 const DATA = `podaci-${VERSION}`;
 const FONTS = `fontovi-${VERSION}`;
@@ -16,7 +16,8 @@ const SHELL_FILES = [
   './assets/js/app.js', './assets/js/api.js', './assets/js/charts.js',
   './assets/js/astro.js', './assets/js/format.js', './assets/js/weather-codes.js',
   './manifest.webmanifest',
-  './assets/icons/icon-192.png', './assets/icons/apple-touch-icon.png'
+  './assets/icons/icon-192.png', './assets/icons/apple-touch-icon.png',
+  './assets/brand/sidekick.png'
 ];
 
 self.addEventListener('install', (event) => {
