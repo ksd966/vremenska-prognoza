@@ -8,8 +8,9 @@
 
 <!-- instalacija na početni ekran (iOS i Android) -->
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#16211C">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F1113">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F1F1EF">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Vremeplov">
@@ -24,10 +25,7 @@
 <link rel="apple-touch-startup-image" media="(device-width:393px) and (device-height:852px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="assets/splash/splash-1179x2556.png">
 <link rel="apple-touch-startup-image" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3) and (orientation:portrait)" href="assets/splash/splash-1290x2796.png">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://api.open-meteo.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-sky="night">
@@ -41,7 +39,10 @@
     <span class="brand__mark" aria-hidden="true"></span>
     <span class="brand__name">
       <span class="brand__text">Vremeplov<span class="brand__dot">.</span></span>
-      <img class="brand__by" src="assets/brand/sidekick.png" alt="Sidekick" width="1272" height="345">
+      <picture class="brand__by">
+        <source srcset="assets/brand/sidekick.png" media="(prefers-color-scheme: dark)">
+        <img src="assets/brand/sidekick-light.png" alt="Sidekick" width="1272" height="345">
+      </picture>
     </span>
   </a>
 

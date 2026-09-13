@@ -82,13 +82,13 @@ pregled za sedam dana. Ovo se **računa lokalno** (NOAA / Meeus) i ne zavisi od 
 
 ## Izgled
 
-Paleta „Mineral": duboka šumska zelena podloga, peščana slova, peščano zlato kao
-akcenat. Bez stakla, blura i sjaja — ravne površine, tanke linije, serifna
-tipografija za brojeve.
+Neutralna podloga koja **prati podešavanje telefona** — tamna u tamnom režimu, svetla u
+svetlom. Sistemski font (na iPhone-u SF Pro), bez ijednog fonta sa mreže. Bez stakla,
+blura i sjaja — ravne površine i tanke linije.
 
-Boje podataka su **fiksne i odvojene od izgleda**: hladno `#2E9E8F`, toplo `#D4623A`,
-padavine `#5A6FD6`, vetar `#CE9A3C`. Proverene su validatorom na podlozi aplikacije —
-razdvojive su i pri daltonizmu. Vreme menja samo ton podloge, nikad boju podatka.
+Boje podataka su **fiksne**: hladno `#2E9E8F`, toplo `#D4623A`, padavine `#5A6FD6`,
+vetar `#CE9A3C` — sa potamnjenim vrednostima za svetli režim. Proverene su validatorom
+na obe podloge; razdvojive su i pri daltonizmu.
 
 ## Pokretanje
 

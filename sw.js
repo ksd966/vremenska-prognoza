@@ -5,10 +5,9 @@
  * Podaci uvek prvo idu na mrežu; keš je rezerva kad mreže nema, uz jasnu
  * poruku u aplikaciji koliko su podaci stari.
  */
-const VERSION = 'v5';
+const VERSION = 'v7';
 const SHELL = `ljuska-${VERSION}`;
 const DATA = `podaci-${VERSION}`;
-const FONTS = `fontovi-${VERSION}`;
 
 const SHELL_FILES = [
   './', './index.html',
@@ -17,7 +16,7 @@ const SHELL_FILES = [
   './assets/js/astro.js', './assets/js/format.js', './assets/js/weather-codes.js',
   './manifest.webmanifest',
   './assets/icons/icon-192.png', './assets/icons/apple-touch-icon.png',
-  './assets/brand/sidekick.png'
+  './assets/brand/sidekick.png', './assets/brand/sidekick-light.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -32,14 +31,13 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(
-        keys.filter((k) => ![SHELL, DATA, FONTS].includes(k)).map((k) => caches.delete(k))
+        keys.filter((k) => ![SHELL, DATA].includes(k)).map((k) => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
 });
 
 const isApi = (url) => url.hostname.endsWith('open-meteo.com');
-const isFont = (url) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -57,18 +55,6 @@ self.addEventListener('fetch', (event) => {
           return res;
         })
         .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // Fontovi: keš prvo, da aplikacija izgleda isto i bez mreže.
-  if (isFont(url)) {
-    event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request).then((res) => {
-        const copy = res.clone();
-        caches.open(FONTS).then((cache) => cache.put(request, copy));
-        return res;
-      }).catch(() => cached))
     );
     return;
   }

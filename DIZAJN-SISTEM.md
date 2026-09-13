@@ -28,8 +28,9 @@ dokumenta koja nije stvar ukusa.
 
 ## 2. Boje
 
-Paleta se zove **Mineral**: duboka šumska zelena podloga, peščana slova, peščano zlato
-kao akcenat.
+Podloga je **neutralna i prati podešavanje telefona** — tamna kad je telefon u tamnom
+režimu, svetla kad je u svetlom. To je ono što aplikacije rade, i zato deluje kao
+aplikacija, a ne kao sajt sa svojom temom.
 
 ### Pravilo koje se ne krši
 
@@ -44,29 +45,25 @@ kao akcenat.
 
 ```css
 :root{
-  /* površine */
-  --ground:#16211C;        /* podloga cele strane */
-  --surface:#1E2C25;       /* kartica */
-  --surface-2:#243428;     /* podignuta površina, meniji */
-  --line:rgba(236,231,221,.11);
-  --line-strong:rgba(236,231,221,.2);
+  color-scheme:light dark;
 
-  /* mastilo */
-  --text:#ECE7DD;
-  --muted:#A6B0A3;
-  --dim:#7C887B;
+  --ground:#0F1113;        /* podloga cele strane */
+  --surface:#17191C;       /* kartica */
+  --surface-2:#1E2125;     /* podignuta površina, meniji */
+  --line:rgba(255,255,255,.10);
+  --line-strong:rgba(255,255,255,.18);
 
-  /* akcenat — samo hrom, nikad podatak */
-  --accent:#C2A878;
+  --text:#F2F2F0;
+  --muted:#A3A7AC;
+  --dim:#767B82;
+  --accent:#E0A64B;        /* samo hrom, nikad podatak */
 
-  /* podaci — fiksno */
   --c-cold:#2E9E8F;        /* hladno / niska vrednost */
   --c-warm:#D4623A;        /* toplo / visoka vrednost */
   --c-rain:#5A6FD6;        /* druga veličina */
   --c-wind:#CE9A3C;        /* treća veličina */
 
-  /* status — rezervisano, uvek uz oblik ili tekst */
-  --s-good:#0ca30c;
+  --s-good:#0ca30c;        /* status — uvek uz oblik ili tekst */
   --s-warn:#fab219;
   --s-serious:#ec835a;
   --s-critical:#d03b3b;
@@ -74,6 +71,28 @@ kao akcenat.
   --radius:18px;
   --radius-sm:12px;
 }
+
+@media (prefers-color-scheme:light){
+  :root{
+    --ground:#F1F1EF;  --surface:#FFFFFF;  --surface-2:#FAFAF8;
+    --line:rgba(17,19,21,.11);  --line-strong:rgba(17,19,21,.2);
+    --text:#131518;  --muted:#585E66;  --dim:#848A92;  --accent:#9A6A16;
+
+    /* iste veličine, potamnjene da se vide na beloj podlozi */
+    --c-cold:#03897C;  --c-warm:#BF4A2C;  --c-rain:#3D4FC7;  --c-wind:#9A6A16;
+  }
+}
+```
+
+**Ono što je obojeno mora da se proveri u oba režima.** Zelena oznaka koja lepo stoji na
+tamnoj podlozi na beloj postaje nečitka; isto važi za logotip u beloj boji. Svaka takva
+stavka dobija svoju vrednost u svetlom bloku, a dvobojni logotip ide kroz `<picture>`:
+
+```html
+<picture>
+  <source srcset="logo-belo.png" media="(prefers-color-scheme: dark)">
+  <img src="logo-tamno.png" alt="Sidekick">
+</picture>
 ```
 
 ### Provereno, ne procenjeno
@@ -91,26 +110,29 @@ Pravila koja su iz te provere ispala kao obavezna:
 
 ## 3. Tipografija
 
-| Uloga | Font | Gde |
-|---|---|---|
-| Naslovi i brojevi | **Fraunces** (serif, opsz 9–144) | ime aplikacije, velike vrednosti, naslovi sekcija |
-| Sve ostalo | **Inter** | tekst, oznake, tabele, dugmad |
-
-```html
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-```
+**Sistemski font, bez ijednog fonta sa mreže.**
 
 ```css
-.display{font-family:"Fraunces","Iowan Old Style",Georgia,serif;font-weight:500;letter-spacing:-.015em}
-body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.55}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.55;
+}
 
 /* Brojevi koji stoje u kolonama moraju da budu iste širine */
 .tabular{font-variant-numeric:tabular-nums}
+
+/* Velika vrednost: tanko i zbijeno, bez ukrasa */
+.temp{font-weight:250;font-size:clamp(76px,12.5vw,136px);letter-spacing:-.055em;
+      font-variant-numeric:tabular-nums}
 ```
 
-Serif za brojeve je ono što aplikaciju izvlači iz „svaka druga aplikacija" izgleda.
-Velika vrednost (temperatura, rezultat, ocena) ide u Fraunces 300–500, sa negativnim
-razmakom između slova.
+Na iPhone-u to znači **SF Pro** — isti font kojim su ispisane sistemske aplikacije. Zato
+aplikacija deluje kao deo telefona, a ne kao stranica sa svojim ukusom. Uz to nema
+čekanja da se font skine, nema bljeska pogrešnim fontom i nema zavisnosti od tuđeg
+servera.
+
+Dekorativni font (serif, display) na ovako sitnom tekstu izgleda kićasto i usporava
+čitanje brojeva — ne koristi se.
 
 ---
 
@@ -123,14 +145,21 @@ lepa bila, ostaje sajt.
 
 ```css
 /* Bez dugog pritiska sa menijem, bez plavog označavanja teksta prevlačenjem,
-   bez sivog bljeska pri dodiru, bez zuma na dupli tap. */
+   bez sivog bljeska pri dodiru, bez zuma na dupli tap, bez klaćenja strane. */
+html{overflow-x:hidden;overscroll-behavior:none}
 body{
+  width:100%;max-width:100%;
   -webkit-user-select:none;
   user-select:none;
   -webkit-touch-callout:none;
   -webkit-tap-highlight-color:transparent;
-  overscroll-behavior-y:none;          /* bez odskakanja cele strane */
+  overflow-x:hidden;
+  overscroll-behavior:none;            /* bez odskakanja u oba pravca */
+  touch-action:pan-y pinch-zoom;       /* prst pomera stranu samo gore-dole */
 }
+
+/* Vodoravno se pomeraju samo elementi koji to zaista treba */
+.chart__scroll,.astro__table{touch-action:pan-x}
 
 /* Polja za unos moraju da ostanu normalna */
 input,textarea,[contenteditable]{-webkit-user-select:text;user-select:text}
@@ -544,6 +573,8 @@ između vremena i bola razlikuje se od osobe do osobe i nije dokazana kao pravil
 - [ ] nema zuma na dupli tap, nema sivog bljeska pri dodiru
 - [ ] nijedna meta za dodir nije niža od 40 px
 - [ ] stranica se ne preliva vodoravno na 390 px širine
+- [ ] prst ne pomera stranu levo-desno (`touch-action:pan-y pinch-zoom`)
+- [ ] proveren izgled u svetlom **i** tamnom režimu telefona
 - [ ] bezbedne zone poštovane gore i dole
 
 **Instalacija**
