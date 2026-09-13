@@ -151,6 +151,12 @@ Imena parametara su usklađena sa zvaničnom dokumentacijom. Razilaženje modela
 čita iz svih nizova maksimalne temperature u odgovoru, bez pretpostavke o tačnom
 obliku sufiksa po modelu.
 
+## Sistem izrade
+
+[`DIZAJN-SISTEM.md`](DIZAJN-SISTEM.md) opisuje sve odluke iza ove aplikacije — paletu,
+tipografiju, ponašanje kao telefonska aplikacija, instalaciju, komponente i rad sa
+podacima — tako da se mogu preneti na drugu aplikaciju.
+
 ## Izvori
 
 - [Open-Meteo](https://open-meteo.com/) — prognoza, poređenje modela, more, geokodiranje
