@@ -28,12 +28,23 @@ export async function searchPlaces(query, signal) {
   return data.results || [];
 }
 
+/**
+ * Osnovni parametri za svaki poziv.
+ *
+ * Kada se zna prava nadmorska visina tačke, šalje se uz koordinate: model inače
+ * računa za prosečnu visinu svoje mreže, pa bi na vrhu planine vratio temperaturu
+ * nekoliko stotina metara niže nego što jeste.
+ */
 function baseParams(place) {
-  return {
+  const params = {
     latitude: place.latitude,
     longitude: place.longitude,
     timezone: 'auto'
   };
+  if (typeof place.elevation === 'number' && Number.isFinite(place.elevation)) {
+    params.elevation = place.elevation;
+  }
+  return params;
 }
 
 /**
@@ -72,7 +83,8 @@ function fullForecast(place) {
     ].join(','),
     hourly: [
       'temperature_2m', 'precipitation_probability', 'precipitation', 'weather_code',
-      'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'is_day'
+      'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'is_day',
+      'freezing_level_height'
     ].join(','),
     daily: [
       'weather_code', 'temperature_2m_max', 'temperature_2m_min', 'apparent_temperature_max',

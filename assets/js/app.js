@@ -30,6 +30,7 @@ const REFRESH = {
 
 const QUICK = [
   { name: 'Olympic Beach', admin1: 'Pieria', country: 'Grčka', latitude: 40.2536, longitude: 22.5968 },
+  { name: 'Mitikas', admin1: 'vrh Olimpa', country: 'Grčka', latitude: 40.0885, longitude: 22.3487, elevation: 2917 },
   { name: 'Beograd', country: 'Srbija', latitude: 44.804, longitude: 20.4651 },
   { name: 'Novi Sad', country: 'Srbija', latitude: 45.2671, longitude: 19.8335 },
   { name: 'Solun', country: 'Grčka', latitude: 40.6403, longitude: 22.9439 }
@@ -40,7 +41,7 @@ const el = new Proxy({}, { get: (_, id) => document.getElementById(String(id).re
 
 let state = {
   place: null, data: null, facing: 90, clock: null, abort: null, active: -1,
-  fetchedAt: 0, lightTimer: null, fullTimer: null, ageTimer: null, busy: false
+  fetchedAt: 0, lightTimer: null, fullTimer: null, ageTimer: null, busy: false, elevation: null
 };
 
 /* ====================================================================== pomoćno */
@@ -49,6 +50,36 @@ const placeLabel = (p) =>
   [p.name, p.admin1 && p.admin1 !== p.name ? p.admin1 : null, p.country].filter(Boolean).join(', ');
 
 const isoDate = (iso) => iso.slice(0, 10).split('-').map(Number);
+
+/** Nadmorska visina, zaokružena na način na koji se o njoj govori. */
+const elevationText = (m) => (typeof m === 'number' ? `${Math.round(m)} m n.v.` : null);
+
+/**
+ * Prepoznaje unos u obliku koordinata: „40.0885, 22.3487", „40.0885 N 22.3487 E",
+ * „40,0885 22,3487". Tako se stiže i do tačke koja nema ime u bazi mesta.
+ */
+function parseCoordinates(text) {
+  const cleaned = text.trim().replace(/[°\s]*([NnSsEeWwЕеЗзСсЈј])/g, ' $1');
+  const match = cleaned.match(
+    /^(-?\d{1,2}(?:[.,]\d+)?)\s*([NnSs])?[,;\s]+(-?\d{1,3}(?:[.,]\d+)?)\s*([EeWw])?$/
+  );
+  if (!match) return null;
+
+  let lat = parseFloat(match[1].replace(',', '.'));
+  let lon = parseFloat(match[3].replace(',', '.'));
+  if (/[Ss]/.test(match[2] || '')) lat = -lat;
+  if (/[Ww]/.test(match[4] || '')) lon = -lon;
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+
+  return {
+    name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+    label: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+    latitude: lat,
+    longitude: lon
+  };
+}
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function setStatus(message, kind = 'info') {
@@ -71,7 +102,8 @@ function showSuggestions(results) {
 
   el.suggestions.innerHTML = results.map((r, i) =>
     `<li role="option" aria-selected="false" data-index="${i}">
-       <b>${r.name}</b><span>${[r.admin1, r.country].filter(Boolean).join(', ')}</span>
+       <b>${r.name}</b>
+       <span>${[r.admin1, r.country, elevationText(r.elevation)].filter(Boolean).join(' · ')}</span>
      </li>`).join('');
   el.suggestions.hidden = false;
   el['search-input'].setAttribute('aria-expanded', 'true');
@@ -100,6 +132,9 @@ function initSearch() {
     const q = input.value.trim();
     if (q.length < 2) return closeSuggestions();
 
+    const point = parseCoordinates(q);
+    if (point) return showSuggestions([{ ...point, admin1: 'koordinate' }]);
+
     timer = setTimeout(async () => {
       state.abort?.abort();
       state.abort = new AbortController();
@@ -125,6 +160,10 @@ function initSearch() {
     }
     const q = input.value.trim();
     if (q.length < 2) return;
+
+    const point = parseCoordinates(q);
+    if (point) return choose(point);
+
     try {
       const [first] = await searchPlaces(q);
       if (first) choose(first);
@@ -185,6 +224,38 @@ function renderNow(place, d) {
   el['rain-now'].innerHTML = c.precipitation > 0 ? `${c.precipitation.toFixed(1)}<small>mm/h</small>` : 'nema';
   el.humidity.innerHTML = `${round(c.relative_humidity_2m)}<small>%</small>`;
   el.pressure.textContent = `${round(c.pressure_msl)} hPa`;
+
+  state.elevation = typeof d.forecast.elevation === 'number' ? d.forecast.elevation : null;
+  renderFreezing(d);
+}
+
+/**
+ * Nulta izoterma: visina na kojoj temperatura prelazi nulu.
+ * Ima smisla tek u planini, pa se pločica prikazuje od 800 m naviše — tamo
+ * razlika između „kiša" i „sneg" zavisi baš od toga da li je vrh iznad te granice.
+ */
+function renderFreezing(d) {
+  const tile = el['tile-freezing'];
+  const height = d.forecast.hourly?.freezing_level_height;
+  const elevation = state.elevation;
+
+  if (typeof elevation !== 'number' || elevation < 800 || !height?.length) {
+    tile.hidden = true;
+    return;
+  }
+
+  const now = d.forecast.current.time.slice(0, 13);
+  const i = Math.max(0, d.forecast.hourly.time.findIndex((t) => t.slice(0, 13) === now));
+  const level = height[i];
+  if (typeof level !== 'number') { tile.hidden = true; return; }
+
+  tile.hidden = false;
+  el.freezing.innerHTML = `${Math.round(level / 10) * 10}<small>m</small>`;
+
+  const razlika = Math.round(level - elevation);
+  el['freezing-note'].textContent = razlika >= 0
+    ? `${razlika} m iznad vrha — padavine kao kiša`
+    : `${Math.abs(razlika)} m ispod vrha — na vrhu je ispod nule`;
 }
 
 /** Rečenica o narednih 12 h — ono što bi čovek prvo pitao. */
@@ -432,6 +503,7 @@ function buildHours(d) {
       wind: h.wind_speed_10m[i],
       gust: h.wind_gusts_10m?.[i] ?? h.wind_speed_10m[i],
       dir: h.wind_direction_10m[i],
+      freezing: h.freezing_level_height?.[i],
       isDay: h.is_day?.[i] === 1
     };
   });
@@ -593,9 +665,10 @@ function startClock(timezone) {
   clearInterval(state.clock);
   const tick = () => {
     try {
-      el['local-time'].textContent = new Intl.DateTimeFormat(LOCALE, {
+      const time = new Intl.DateTimeFormat(LOCALE, {
         timeZone: timezone, weekday: 'long', hour: '2-digit', minute: '2-digit'
       }).format(new Date());
+      el['local-time'].textContent = [time, elevationText(state.elevation)].filter(Boolean).join(' · ');
     } catch { el['local-time'].textContent = ''; }
   };
   tick();
@@ -656,7 +729,13 @@ function choose(place) {
   closeSuggestions();
   el['search-input'].value = '';
   el['search-input'].blur();
-  load({ ...place, label: place.label || placeLabel(place) });
+  load({ ...place, label: place.label || placeWithElevation(place) });
+}
+
+/** Naziv mesta uz visinu, kada je visina deo onoga po čemu se mesto prepoznaje. */
+function placeWithElevation(place) {
+  const height = elevationText(place.elevation);
+  return height && place.elevation >= 800 ? `${placeLabel(place)} · ${height}` : placeLabel(place);
 }
 
 /* ====================================================================== brzi izbor */

@@ -48,7 +48,7 @@
 
   <form class="search" id="search-form" role="search" autocomplete="off">
     <svg class="search__icon" aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
-    <input id="search-input" class="search__input" type="search" placeholder="Pretraži mesto…"
+    <input id="search-input" class="search__input" type="search" placeholder="Mesto, vrh ili koordinate…"
            aria-label="Pretraga mesta" role="combobox" aria-expanded="false" aria-controls="suggestions">
     <button class="search__geo" id="geo-btn" type="button" title="Moja lokacija" aria-label="Moja lokacija">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
@@ -110,6 +110,11 @@
         <p class="tile__label">Vlažnost</p>
         <p class="tile__value" id="humidity">–<small>%</small></p>
         <p class="tile__extra" id="pressure">—</p>
+      </article>
+      <article class="card tile tile--alpine" id="tile-freezing" hidden>
+        <p class="tile__label">Nulta izoterma</p>
+        <p class="tile__value" id="freezing">–<small>m</small></p>
+        <p class="tile__extra" id="freezing-note">—</p>
       </article>
     </div>
   </section>

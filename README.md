@@ -76,6 +76,17 @@ na prelazak mišem.
 **Dan po dan** — ikonica, verovatnoća i količina padavina, vetar i udari, UV, raspon
 temperatura u odnosu na ceo period i oznaka pouzdanosti.
 
+**Visina i planina** — uz ime mesta stoji nadmorska visina, a za tačke iznad 800 m
+prikazuje se i **nulta izoterma**: visina na kojoj temperatura prelazi nulu, sa
+računicom koliko je to iznad ili ispod same tačke. Kada se zna prava visina (vrh,
+prevoj), šalje se API-ju, pa se temperatura spušta na tu visinu umesto na prosek
+modelske mreže — razlika ume da bude i preko 5 °C.
+
+**Pretraga vrhova i koordinata** — pored imena mesta prihvata se i par koordinata
+(`40.0885, 22.3487`, `40,0885 22,3487`, `40.0885 N 22.3487 E`), pa se stiže i do tačke
+koja nema ime u bazi. Predlozi pretrage prikazuju visinu, po kojoj se vrh razlikuje od
+istoimenog mesta u dolini. Mitikas, najviši vrh Olimpa (2917 m), stoji u brzom izboru.
+
 **Sunce i Mesec** — izlazak, zalazak, dužina dana, zlatni sat, podnevna visina Sunca
 i procena UV po vedrom, faza i osvetljenost Meseca, izlazak i zalazak Meseca, plus
 pregled za sedam dana. Ovo se **računa lokalno** (NOAA / Meeus) i ne zavisi od mreže.
