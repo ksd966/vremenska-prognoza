@@ -334,6 +334,30 @@ self.addEventListener('fetch', (event) => {
 
 Pri svakoj izmeni **podigni `VERSION`** — inače korisnik i dalje gleda staru verziju.
 
+Uz to, strana mora da se osveži sama kada nova verzija preuzme kontrolu. Bez ovoga
+korisnik posle izmene gleda staru verziju iz keša dok aplikaciju ne zatvori i otvori
+dva puta:
+
+```js
+const hadController = Boolean(navigator.serviceWorker.controller);
+let reloading = false;
+
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (!hadController || reloading) return;   // prva instalacija ne traži osvežavanje
+  reloading = true;
+  location.reload();
+});
+
+navigator.serviceWorker.register('sw.js').then((registration) => {
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) registration.update().catch(() => {});
+  });
+});
+```
+
+Provera `hadController` je obavezna — bez nje se prva instalacija završi suvišnim
+osvežavanjem, a `reloading` sprečava petlju.
+
 ### Savet za instalaciju — samo tamo gde ima smisla
 
 ```js

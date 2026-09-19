@@ -842,8 +842,26 @@ function installHint() {
 
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+
+  // Ako je strana već pod kontrolom starije verzije, a stigne nova, aplikacija se
+  // jednom osveži sama. Bez toga se posle izmene gleda stara verzija iz keša sve
+  // dok se aplikacija ne zatvori i otvori dva puta.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;      // prva instalacija ne traži osvežavanje
+    reloading = true;
+    location.reload();
+  });
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* radi i bez njega */ });
+    navigator.serviceWorker.register('sw.js').then((registration) => {
+      // Provera nove verzije pri svakom povratku u aplikaciju.
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) registration.update().catch(() => { /* bez mreže */ });
+      });
+    }).catch(() => { /* radi i bez njega */ });
   });
 }
 
