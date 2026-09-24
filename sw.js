@@ -5,7 +5,7 @@
  * Podaci uvek prvo idu na mrežu; keš je rezerva kad mreže nema, uz jasnu
  * poruku u aplikaciji koliko su podaci stari.
  */
-const VERSION = 'v8';
+const VERSION = 'v9';
 const SHELL = `ljuska-${VERSION}`;
 const DATA = `podaci-${VERSION}`;
 

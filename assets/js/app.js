@@ -519,11 +519,118 @@ function renderHours(hours) {
 
 /* ====================================================================== dani */
 
+/** Satni podaci grupisani po datumu — koristi ih razrada dana. */
+function hoursByDate(d) {
+  const h = d.forecast.hourly;
+  const map = new Map();
+  if (!h?.time?.length) return map;
+
+  h.time.forEach((time, i) => {
+    const date = time.slice(0, 10);
+    if (!map.has(date)) map.set(date, []);
+    map.get(date).push({
+      hour: Number(time.slice(11, 13)),
+      temp: h.temperature_2m[i],
+      pop: h.precipitation_probability?.[i] ?? 0,
+      mm: h.precipitation?.[i] ?? 0,
+      code: h.weather_code[i],
+      wind: h.wind_speed_10m[i],
+      gust: h.wind_gusts_10m?.[i] ?? h.wind_speed_10m[i],
+      dir: h.wind_direction_10m[i]
+    });
+  });
+  return map;
+}
+
+const PARTS = [
+  { key: 'noc', label: 'Noć', from: 0, to: 6 },
+  { key: 'jutro', label: 'Jutro', from: 6, to: 12 },
+  { key: 'popodne', label: 'Popodne', from: 12, to: 18 },
+  { key: 'vece', label: 'Veče', from: 18, to: 24 }
+];
+
+/** Rečenica o padavinama: kada su verovatne i koliko ih ima. */
+function rainSentence(hours, day, i) {
+  const pop = day.precipitation_probability_max?.[i] ?? 0;
+  const mm = day.precipitation_sum?.[i] ?? 0;
+  const sum = rain(mm);
+
+  if (hours?.length) {
+    const wet = hours.filter((h) => h.pop >= 40);
+    if (!wet.length) {
+      return pop >= 20 ? `Slaba mogućnost padavina, najviše ${pop}%.` : 'Bez padavina.';
+    }
+    const first = wet[0].hour;
+    const last = wet[wet.length - 1].hour;
+    const peak = wet.reduce((a, b) => (b.pop > a.pop ? b : a));
+    const raspon = first === last ? `oko ${String(first).padStart(2, '0')}h`
+      : `od ${String(first).padStart(2, '0')} do ${String(last + 1).padStart(2, '0')}h`;
+    return `Kiša je verovatna ${raspon}, vrhunac oko ${String(peak.hour).padStart(2, '0')}h (${peak.pop}%)${sum ? `, ukupno ${sum}` : ''}.`;
+  }
+
+  // Bez satnih podataka ostaje samo dnevni zbir.
+  if (pop < 20 && !sum) return 'Bez padavina.';
+  const trajanje = day.precipitation_hours?.[i];
+  return `Padavine su moguće (${pop}%)${sum ? `, ukupno ${sum}` : ''}${trajanje ? `, oko ${Math.round(trajanje)} h kiše` : ''}.`;
+}
+
+/** Razrada jednog dana: ono što se vidi kada se red otvori. */
+function dayDetail(d, i, hours) {
+  const day = d.forecast.daily;
+  const date = day.time[i];
+  const tz = d.forecast.utc_offset_seconds / 3600;
+  const sun = sunTimes(isoDate(date), d.forecast.latitude ?? state.place.latitude,
+                       d.forecast.longitude ?? state.place.longitude, tz);
+  const conf = confidence(i, d.spread?.[i] ?? null);
+
+  const warmest = hours?.length ? hours.reduce((a, b) => (b.temp > a.temp ? b : a)) : null;
+  const coldest = hours?.length ? hours.reduce((a, b) => (b.temp < a.temp ? b : a)) : null;
+  const windiest = hours?.length ? hours.reduce((a, b) => (b.gust > a.gust ? b : a)) : null;
+
+  const redovi = [
+    ['Najtoplije', `${temp(day.temperature_2m_max[i])}${warmest ? ` u ${String(warmest.hour).padStart(2, '0')}h` : ''}`],
+    ['Najhladnije', `${temp(day.temperature_2m_min[i])}${coldest ? ` u ${String(coldest.hour).padStart(2, '0')}h` : ''}`],
+    ['Oseća se kao', temp(day.apparent_temperature_max?.[i])],
+    ['Vetar', `${round(day.wind_speed_10m_max[i])} km/h, udari ${round(day.wind_gusts_10m_max[i])}${windiest ? ` u ${String(windiest.hour).padStart(2, '0')}h` : ''}`],
+    ['Pravac vetra', `duva sa ${windRose(day.wind_direction_10m_dominant[i]).from}`],
+    ['UV', `${Math.round(day.uv_index_max?.[i] ?? 0)} — ${uvLevel(Math.round(day.uv_index_max?.[i] ?? 0)).label}`],
+    ['Sunce', `${hhmm(sun.rise)} – ${hhmm(sun.set)}, dan traje ${duration(sun.dayLength)}`],
+    ['Pouzdanost', conf.label + (typeof d.spread?.[i] === 'number' && d.spread[i] >= 0.5
+      ? `, modeli se razilaze ${d.spread[i].toFixed(1)}°` : '')]
+  ].filter(([, value]) => value && !String(value).includes('–undefined'));
+
+  const delovi = !hours?.length ? '' : `
+    <div class="detail__parts">
+      ${PARTS.map((part) => {
+        const inPart = hours.filter((h) => h.hour >= part.from && h.hour < part.to);
+        if (!inPart.length) return '';
+        const max = Math.max(...inPart.map((h) => h.temp));
+        const pop = Math.max(...inPart.map((h) => h.pop));
+        const wind = Math.max(...inPart.map((h) => h.wind));
+        return `<div class="part">
+          <span class="part__label">${part.label}</span>
+          <span class="part__temp">${temp(max)}</span>
+          <span class="part__rain ${pop >= 40 ? 'is-wet' : ''}">${pop >= 10 ? pop + '%' : '—'}</span>
+          <span class="part__wind">${round(wind)} km/h</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  return `
+    <p class="detail__lead">${describe(day.weather_code[i])}. ${rainSentence(hours, day, i)}</p>
+    ${delovi}
+    ${!hours?.length ? '<p class="detail__note">Za ovaj dan postoji samo dnevni zbir — raspored po satima seže do 3 dana unapred.</p>' : ''}
+    <dl class="detail__rows">
+      ${redovi.map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('')}
+    </dl>`;
+}
+
 function renderDays(d) {
   const day = d.forecast.daily;
   const count = Math.min(TREND_FROM_DAY, day.time.length);
   const lo = Math.min(...day.temperature_2m_min.slice(0, count));
   const hi = Math.max(...day.temperature_2m_max.slice(0, count));
+  const byDate = hoursByDate(d);
 
   el.days.innerHTML = day.time.slice(0, count).map((date, i) => {
     const conf = confidence(i, d.spread?.[i] ?? null);
@@ -533,30 +640,54 @@ function renderDays(d) {
     const uv = uvLevel(uvValue);
 
     return `
-    <div class="day" role="row">
-      <div class="day__when">
-        <b>${dayName(date, i)}</b><span>${shortDate(date)}</span>
-      </div>
-      <div class="day__icon">${icon(day.weather_code[i], true)}</div>
-      <div class="day__rain ${pop >= 40 ? 'is-wet' : ''}">
-        ${pop >= 10 ? `${pop}%` : '—'}${mm ? `<span>${mm}</span>` : ''}
-      </div>
-      <div class="day__wind">
-        ${round(day.wind_speed_10m_max[i])}<small>km/h</small>
-        <span>udari ${round(day.wind_gusts_10m_max[i])}</span>
-      </div>
-      <div class="day__uv"><span class="uv uv--${uv.key}">UV ${uvValue}</span></div>
-      <div class="day__range">
-        ${rangeBar(day.temperature_2m_min[i], day.temperature_2m_max[i], lo, hi)}
-      </div>
-      <div class="day__temps"><b>${temp(day.temperature_2m_max[i])}</b><span>${temp(day.temperature_2m_min[i])}</span></div>
-      <div class="day__conf">${confidenceMeter(conf.level, conf.label)}</div>
+    <div class="day-block">
+      <button class="day" type="button" aria-expanded="false" aria-controls="dan-${i}" data-index="${i}">
+        <span class="day__when">
+          <b>${dayName(date, i)}</b><span>${shortDate(date)}</span>
+        </span>
+        <span class="day__icon">${icon(day.weather_code[i], true)}</span>
+        <span class="day__rain ${pop >= 40 ? 'is-wet' : ''}">
+          ${pop >= 10 ? `${pop}%` : '—'}${mm ? `<span>${mm}</span>` : ''}
+        </span>
+        <span class="day__wind">
+          ${round(day.wind_speed_10m_max[i])}<small>km/h</small>
+          <span>udari ${round(day.wind_gusts_10m_max[i])}</span>
+        </span>
+        <span class="day__uv"><span class="uv uv--${uv.key}">UV ${uvValue}</span></span>
+        <span class="day__range">
+          ${rangeBar(day.temperature_2m_min[i], day.temperature_2m_max[i], lo, hi)}
+        </span>
+        <span class="day__temps"><b>${temp(day.temperature_2m_max[i])}</b><span>${temp(day.temperature_2m_min[i])}</span></span>
+        <span class="day__conf">${confidenceMeter(conf.level, conf.label)}</span>
+        <svg class="day__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="day__detail" id="dan-${i}" hidden></div>
     </div>`;
   }).join('');
 
+  // Razrada se sklapa tek kad se dan otvori, i uvek je otvoren samo jedan.
+  el.days.onclick = (e) => {
+    const button = e.target.closest('.day');
+    if (!button) return;
+
+    const panel = button.nextElementSibling;
+    const open = button.getAttribute('aria-expanded') === 'true';
+
+    el.days.querySelectorAll('.day[aria-expanded="true"]').forEach((other) => {
+      other.setAttribute('aria-expanded', 'false');
+      other.nextElementSibling.hidden = true;
+    });
+
+    if (open) return;
+    const i = Number(button.dataset.index);
+    panel.innerHTML = dayDetail(d, i, byDate.get(day.time[i]));
+    panel.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+  };
+
   el['days-range'].textContent = `${shortDate(day.time[0])} – ${shortDate(day.time[count - 1])}`;
   el['days-legend'].innerHTML = `
-    Pouzdanost: ${confidenceMeter(3, 'visoka')} visoka ·
+    Dodirni dan za razradu. Pouzdanost: ${confidenceMeter(3, 'visoka')} visoka ·
     ${confidenceMeter(2, 'dobra')} dobra ·
     ${confidenceMeter(1, 'niska')} niska.
     ${d.spread ? 'Uračunato je i razilaženje modela ECMWF, GFS i ICON.'
@@ -657,6 +788,15 @@ function attachTooltip(container, items, render) {
   });
 
   container.addEventListener('pointerleave', () => { tip.hidden = true; });
+
+  // Na dodir `pointerleave` često izostane, pa bi oblačić ostao da visi preko sadržaja.
+  const hide = () => { tip.hidden = true; };
+  container.addEventListener('pointercancel', hide);
+  container.addEventListener('touchend', hide, { passive: true });
+  window.addEventListener('scroll', hide, { passive: true });
+  document.addEventListener('pointerdown', (e) => {
+    if (!container.contains(e.target)) hide();
+  }, { passive: true });
 }
 
 /* ====================================================================== sat */

@@ -74,7 +74,11 @@ plažu: da li vetar duva **sa mora** (talasi, mutnija voda) ili **sa kopna**
 na prelazak mišem.
 
 **Dan po dan** — ikonica, verovatnoća i količina padavina, vetar i udari, UV, raspon
-temperatura u odnosu na ceo period i oznaka pouzdanosti.
+temperatura u odnosu na ceo period i oznaka pouzdanosti. **Dodir otvara razradu dana**:
+rečenica o tome kada je kiša verovatna i koliko je ima, tabela po delovima dana (noć,
+jutro, popodne, veče), sat najtoplijeg i najhladnijeg trenutka, najjači udar i kada,
+pravac vetra, UV, izlazak i zalazak Sunca, dužina dana i razilaženje modela. Za dane
+dalje od tri dana nema satnog rasporeda, pa razrada to i kaže umesto da izmišlja.
 
 **Visina i planina** — uz ime mesta stoji nadmorska visina, a za tačke iznad 800 m
 prikazuje se i **nulta izoterma**: visina na kojoj temperatura prelazi nulu, sa
