@@ -227,6 +227,38 @@ function renderNow(place, d) {
 
   state.elevation = typeof d.forecast.elevation === 'number' ? d.forecast.elevation : null;
   renderFreezing(d);
+  renderSunshine(d);
+}
+
+/**
+ * Sunčanost za narednih 24 h: zbir minuta sunca, i koliki je to deo dana.
+ * Podatak je meren, ne izveden iz oblačnosti — sat bez oblaka nosi punih 60 minuta.
+ */
+function renderSunshine(d) {
+  const h = d.forecast.hourly;
+  const tile = el['sun-24']?.closest('.tile');
+  if (!tile) return;
+
+  if (!h?.sunshine_duration?.length) { tile.hidden = true; return; }
+  tile.hidden = false;
+
+  const now = d.forecast.current.time.slice(0, 13);
+  const start = Math.max(0, h.time.findIndex((t) => t.slice(0, 13) === now));
+  const next = h.sunshine_duration.slice(start, start + 24).filter((v) => typeof v === 'number');
+
+  const minutes = next.reduce((sum, seconds) => sum + seconds / 60, 0);
+  const sati = minutes / 60;
+  el['sun-24'].innerHTML = `${sati < 10 ? sati.toFixed(1).replace('.', ',') : Math.round(sati)}<small>h</small>`;
+
+  // Poređenje sa dužinom dana govori da li je bilo oblačno ili je noć pojela sate.
+  const tz = d.forecast.utc_offset_seconds / 3600;
+  const sun = sunTimes(isoDate(d.forecast.daily.time[0]),
+    d.forecast.latitude ?? state.place.latitude, d.forecast.longitude ?? state.place.longitude, tz);
+  const udeo = sun.dayLength ? Math.round((sati / sun.dayLength) * 100) : null;
+
+  el['sun-note'].textContent = sati < 0.5 ? 'bez sunca'
+    : udeo === null ? `${Math.round(minutes)} min ukupno`
+    : `${udeo}% dužine dana`;
 }
 
 /**
@@ -504,6 +536,8 @@ function buildHours(d) {
       gust: h.wind_gusts_10m?.[i] ?? h.wind_speed_10m[i],
       dir: h.wind_direction_10m[i],
       freezing: h.freezing_level_height?.[i],
+      sun: typeof h.sunshine_duration?.[i] === 'number' ? h.sunshine_duration[i] / 60 : undefined,
+      cloud: h.cloud_cover?.[i],
       isDay: h.is_day?.[i] === 1
     };
   });
@@ -514,6 +548,7 @@ function renderHours(hours) {
   attachTooltip(el['hours-chart'], hours, (h) =>
     `<b>${h.label}</b> · ${describe(h.code)}<br>${Math.round(h.temp)}°<br>
      padavine ${h.pop}%${rain(h.mm) ? ` · ${rain(h.mm)}` : ''}<br>
+     ${typeof h.sun === 'number' ? `sunca ${Math.round(h.sun)} min` : ''}${typeof h.cloud === 'number' ? ` · oblaci ${h.cloud}%` : ''}<br>
      vetar ${Math.round(h.wind)} km/h ${windRose(h.dir).short}`);
 }
 
@@ -536,7 +571,9 @@ function hoursByDate(d) {
       code: h.weather_code[i],
       wind: h.wind_speed_10m[i],
       gust: h.wind_gusts_10m?.[i] ?? h.wind_speed_10m[i],
-      dir: h.wind_direction_10m[i]
+      dir: h.wind_direction_10m[i],
+      sun: typeof h.sunshine_duration?.[i] === 'number' ? h.sunshine_duration[i] / 60 : undefined,
+      cloud: h.cloud_cover?.[i]
     });
   });
   return map;
@@ -594,6 +631,9 @@ function dayDetail(d, i, hours) {
     ['Vetar', `${round(day.wind_speed_10m_max[i])} km/h, udari ${round(day.wind_gusts_10m_max[i])}${windiest ? ` u ${String(windiest.hour).padStart(2, '0')}h` : ''}`],
     ['Pravac vetra', `duva sa ${windRose(day.wind_direction_10m_dominant[i]).from}`],
     ['UV', `${Math.round(day.uv_index_max?.[i] ?? 0)} — ${uvLevel(Math.round(day.uv_index_max?.[i] ?? 0)).label}`],
+    ['Sunčano', typeof day.sunshine_duration?.[i] === 'number'
+      ? `${(day.sunshine_duration[i] / 3600).toFixed(1).replace('.', ',')} h`
+      : null],
     ['Sunce', `${hhmm(sun.rise)} – ${hhmm(sun.set)}, dan traje ${duration(sun.dayLength)}`],
     ['Pouzdanost', conf.label + (typeof d.spread?.[i] === 'number' && d.spread[i] >= 0.5
       ? `, modeli se razilaze ${d.spread[i].toFixed(1)}°` : '')]
@@ -607,11 +647,13 @@ function dayDetail(d, i, hours) {
         const max = Math.max(...inPart.map((h) => h.temp));
         const pop = Math.max(...inPart.map((h) => h.pop));
         const wind = Math.max(...inPart.map((h) => h.wind));
+        const sun = inPart.reduce((sum, h) => sum + (h.sun ?? 0), 0);
         return `<div class="part">
           <span class="part__label">${part.label}</span>
           <span class="part__temp">${temp(max)}</span>
           <span class="part__rain ${pop >= 40 ? 'is-wet' : ''}">${pop >= 10 ? pop + '%' : '—'}</span>
           <span class="part__wind">${round(wind)} km/h</span>
+          ${sun >= 6 ? `<span class="part__sun">${(sun / 60).toFixed(1).replace('.', ',')} h sunca</span>` : ''}
         </div>`;
       }).join('')}
     </div>`;

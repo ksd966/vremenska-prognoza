@@ -26,6 +26,7 @@
   --c-rain:#5A6FD6;
   --c-wind:#CE9A3C;
   --c-gust:#E8C177;
+  --c-sun:#E0A64B;
 
   --s-good:#0ca30c;
   --s-warn:#fab219;
@@ -237,6 +238,7 @@ button{-webkit-appearance:none;appearance:none}
 .tile__value small{font-size:.44em;font-weight:400;color:var(--muted);margin-left:4px;font-family:inherit}
 .tile__extra{color:var(--muted);font-size:12.5px}
 .tile--wind{border-color:color-mix(in srgb,var(--c-wind) 38%,var(--line))}
+.tile--sun{border-color:color-mix(in srgb,var(--c-sun) 32%,var(--line))}
 
 /* ---------- nowcast ---------- */
 .nowcast{margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
@@ -308,6 +310,7 @@ button{-webkit-appearance:none;appearance:none}
 .c-col:hover .c-dot{opacity:1}
 .c-col:hover rect[fill="transparent"]{fill:rgba(236,231,221,.045)}
 .c-rain{fill:var(--c-rain)}
+.c-sun{fill:var(--c-sun)}
 .c-arrow{fill:var(--c-wind)}
 .c-now{stroke:var(--accent);stroke-width:1;stroke-dasharray:3 4;opacity:.75}
 
@@ -358,6 +361,8 @@ button{-webkit-appearance:none;appearance:none}
 .part__rain{color:var(--dim);font-size:12.5px;font-variant-numeric:tabular-nums}
 .part__rain.is-wet{color:var(--c-rain);font-weight:600}
 .part__wind{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right}
+.part__sun{grid-column:1/-1;color:var(--c-sun);font-size:12px;font-variant-numeric:tabular-nums;
+  padding-top:4px;margin-top:2px;border-top:1px solid var(--line)}
 .detail__rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 22px;margin:0}
 .detail__rows>div{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}
 .detail__rows dt{color:var(--muted);font-size:13px}

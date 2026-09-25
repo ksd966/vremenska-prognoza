@@ -70,8 +70,9 @@ grafik vetra i udara sa strelicama pravca.
 plažu: da li vetar duva **sa mora** (talasi, mutnija voda) ili **sa kopna**
 (mirno more). Strana sveta u koju plaža gleda se bira i pamti.
 
-**48 sati** — temperatura kao linija i verovatnoća padavina kao trake, sa detaljima
-na prelazak mišem.
+**48 sati** — temperatura kao linija, verovatnoća padavina kao trake i **sunčanost po
+satu** (minuti sunca u svakom satu, mereno, ne izvedeno iz oblačnosti), sa detaljima na
+dodir. Uz to pločica sa zbirom sunca za narednih 24 h i koliki je to deo dužine dana.
 
 **Dan po dan** — ikonica, verovatnoća i količina padavina, vetar i udari, UV, raspon
 temperatura u odnosu na ceo period i oznaka pouzdanosti. **Dodir otvara razradu dana**:

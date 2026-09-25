@@ -38,7 +38,8 @@ export function hoursChart(hours) {
   const width = PAD.left + n * COL + PAD.right;
   const tempTop = 30, tempH = 84;
   const rainTop = tempTop + tempH + 26, rainH = 40;
-  const labelY = rainTop + rainH + 20;
+  const sunTop = rainTop + rainH + 24, sunH = 22;
+  const labelY = sunTop + sunH + 18;
   const height = labelY + 14;
 
   const temps = hours.map((h) => h.temp);
@@ -60,12 +61,22 @@ export function hoursChart(hours) {
              opacity="${0.35 + (h.pop / 100) * 0.65}"/>`;
   }).join('');
 
+  // Sunčanost: minuti sunca u svakom satu, 0–60. Puna visina = sat bez oblaka.
+  const sunBars = hours.map((h, i) => {
+    if (typeof h.sun !== 'number') return '';
+    const share = Math.max(0, Math.min(1, h.sun / 60));
+    if (share <= 0.02) return '';
+    const barH = Math.max(3, share * sunH);
+    return `<rect class="c-sun" x="${x(i) - 7}" y="${sunTop + sunH - barH}" width="14" height="${barH}" rx="3"
+             opacity="${0.4 + share * 0.6}"/>`;
+  }).join('');
+
   const marks = hours.map((h, i) => `
     <g class="c-col" data-index="${i}">
       <rect x="${x(i) - COL / 2}" y="0" width="${COL}" height="${height}" fill="transparent"/>
       ${i % 3 === 0 ? `<text class="c-axis" x="${x(i)}" y="${labelY}" text-anchor="middle">${esc(h.label)}</text>` : ''}
       ${marked.has(i) ? `<text class="c-value" x="${x(i)}" y="${y(h.temp) - 11}" text-anchor="middle">${Math.round(h.temp)}°</text>` : ''}
-      ${h.isNow ? `<line class="c-now" x1="${x(i)}" y1="${tempTop - 2}" x2="${x(i)}" y2="${rainTop + rainH}"/>` : ''}
+      ${h.isNow ? `<line class="c-now" x1="${x(i)}" y1="${tempTop - 2}" x2="${x(i)}" y2="${sunTop + sunH}"/>` : ''}
       <circle class="c-dot" cx="${x(i)}" cy="${y(h.temp)}" r="3.5"/>
     </g>`).join('');
 
@@ -89,6 +100,10 @@ export function hoursChart(hours) {
   <text class="c-title" x="${PAD.left}" y="${rainTop - 8}">Verovatnoća padavina</text>
   <line class="c-base" x1="${PAD.left}" y1="${rainTop + rainH}" x2="${width - PAD.right}" y2="${rainTop + rainH}"/>
   ${rainBars}
+
+  <text class="c-title" x="${PAD.left}" y="${sunTop - 8}">Sunčanost, minuta po satu</text>
+  <line class="c-base" x1="${PAD.left}" y1="${sunTop + sunH}" x2="${width - PAD.right}" y2="${sunTop + sunH}"/>
+  ${sunBars}
   ${marks}
 </svg>`;
 }

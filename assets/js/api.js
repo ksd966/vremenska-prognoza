@@ -84,12 +84,13 @@ function fullForecast(place) {
     hourly: [
       'temperature_2m', 'precipitation_probability', 'precipitation', 'weather_code',
       'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'is_day',
-      'freezing_level_height'
+      'freezing_level_height', 'sunshine_duration', 'cloud_cover'
     ].join(','),
     daily: [
       'weather_code', 'temperature_2m_max', 'temperature_2m_min', 'apparent_temperature_max',
       'precipitation_sum', 'precipitation_probability_max', 'precipitation_hours',
-      'wind_speed_10m_max', 'wind_gusts_10m_max', 'wind_direction_10m_dominant', 'uv_index_max'
+      'wind_speed_10m_max', 'wind_gusts_10m_max', 'wind_direction_10m_dominant', 'uv_index_max',
+      'sunshine_duration'
     ].join(','),
     minutely_15: 'precipitation,temperature_2m,wind_speed_10m,wind_gusts_10m',
     forecast_minutely_15: '8',
